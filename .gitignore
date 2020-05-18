@@ -1,0 +1,5 @@
+kmls/*
+__pycache__/
+logs/*
+gopro2gpx/*
+3rdlib/*
