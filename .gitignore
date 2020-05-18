@@ -3,3 +3,4 @@ __pycache__/
 logs/*
 gopro2gpx/*
 3rdlib/*
+darknet_data/*

@@ -3,15 +3,29 @@ from types import SimpleNamespace
 import os
 import pathlib
 
-def getpoints(filepath):
+def getpoints(filepath, skip=False):
     if(not chk()):return None
     import gpmf
     from gopro2gpx import BuildGPSPoints
     config = mkconfig(filepath)
     parser = gpmf.Parser(config)
     data = parser.readFromMP4()
-    points = BuildGPSPoints(data, skip=True)
+    points = BuildGPSPoints(data, skip)
     return points
+
+def mkgpspoint(latitude, longitude, time):
+    pass
+
+def fixpoints(points):
+    fixed_points = []
+    for i in range(len(points) - 1):
+        print("checking " + str(i))
+        p = points[i]
+        p_n = points[i + 1]
+        if((p_n.time - p.time).total_seconds() > 1):
+            print(p.__dict__)
+            print(p_n.__dict__)
+    return fixed_points
 
 def gettimediff(points):
     point_a = points[0]
@@ -26,13 +40,15 @@ def test(config):
     from gopro2gpx import BuildGPSPoints
     parser = gpmf.Parser(config)
     data = parser.readFromMP4()
-    points = BuildGPSPoints(data, skip=True)
+    points = BuildGPSPoints(data)
     if(len(points) == 0):
         print("Errrr not a gopro7 file or GPS data missing\r\n Exit......")
         sys.exit(0)
     for point in points:
         print(point.__dict__)
     print(gettimediff(points))
+    print("find " + str(len(points)) + " GPS points in file")
+    fixpoints(points)
     
 def chk():
     curdir = pathlib.Path(__file__).parent.absolute()

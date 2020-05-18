@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 
 class logger():
-    def __init__(self, logdir = "./logs", debug = True):
+    def __init__(self, logdir = "./logs", nameprefix="", debug = False):
         super().__init__()
         self.logdir = logdir
         if(debug):level = logging.DEBUG
@@ -11,7 +11,7 @@ class logger():
         logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
         rootLogger = logging.getLogger()
 
-        fileHandler = logging.FileHandler("{0}/{1}.log".format(self.logdir, datetime.now().strftime('%Y%m%d_%H%M%S')))
+        fileHandler = logging.FileHandler("{0}/{1}_{2}.log".format(self.logdir, datetime.now().strftime('%Y%m%d_%H%M%S'), nameprefix))
         fileHandler.setFormatter(logFormatter)
         rootLogger.addHandler(fileHandler)
 
