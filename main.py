@@ -137,8 +137,9 @@ def savedata(imgds, kmlpoints, debug = False):
     signal.signal(signal.SIGTERM, signal_handler)
     logger(nameprefix="savedata")
     logging.info(str(os.getpid()) + " savedata process start")
-    savesdir = os.path.join(os.path.dirname(__file__), "saves")
-    outputxlsx = toxlsx()
+    savesdir = os.path.join(os.path.dirname(__file__), "saves", "report_" + datetime.now().strftime('%Y%m%d_%H%M%S'))
+    os.makedirs(savesdir)
+    outputxlsx = toxlsx(savesdir)
     while True:
         if(imgds.empty()):
             time.sleep(1)
@@ -147,26 +148,26 @@ def savedata(imgds, kmlpoints, debug = False):
             job = imgds.get()
             if(job.detections != []):
                 logging.info("on frame {0} detected object".format(str(job.frame_count)))
-                job.filename = os.path.join(os.path.dirname(__file__), "saves", str(job.frame_count) + ".jpg")
+                job.filename = os.path.join(savesdir, str(job.frame_count) + ".jpg")
                 logging.debug("frame_count {0}.detections = {1}".format(str(job.frame_count), str(job.detections)))
                 roiflag, job.frame = cf.roiDrawBoxes(job.detections, job.frame)
                 if(roiflag):
                     cv2.imwrite(job.filename, job.frame[...,::-1])
                     outputxlsx.add_record(job)
             elif(job.detections == []):
-                filename = os.path.join(os.path.dirname(__file__), "saves", "debug", str(job.frame_count) + ".jpg")
+                filename = os.path.join(savesdir, "debug", str(job.frame_count) + ".jpg")
                 logging.debug("skip frame_count {0} for detections == {1}".format(str(job.frame_count), str(job.detections)))
                 if(debug):cv2.imwrite(filename, job.frame[...,::-1])
 
 class toxlsx():
-    def __init__(self):
+    def __init__(self, logdir):
         # {'lat': 24.3372203, 'lon': 120.62232, 'time': datetime.datetime(2020, 3, 19, 17, 6, 11), 'hmd': namespace(meter=49.4823450363076, name='K180+300'),
         # 'frame_count': 26372, 'detections': [('eclip_break_L1', 0.5526050925254822, (246.8352813720703, 251.3843994140625, 39.2724609375, 137.72581481933594))], 'filename': 'D:\\workspace\\rail_y2\\reporter\\saves\\26372.jpg'}
         import xlwings as xw
-        self.wbpath = os.path.join(os.path.dirname(__file__), "saves", "report_" + datetime.now().strftime('%Y%m%d_%H%M%S') + ".xlsx")
+        self.wbpath = os.path.join(logdir, os.path.basename(logdir) + ".xlsx")
         self.workbook = xw.Book()
         self.sheet = self.workbook.sheets['工作表1']
-        self.objcount = 0
+        self.objcount = 1
         self.cur_line = 2
         self.initsheet()
 
@@ -204,5 +205,6 @@ class toxlsx():
 
 if __name__ == "__main__":
     logger(nameprefix="Main")
-    file = '.\\gopro2gpx\\gopro7.MP4'
-    main(file=file)
+    file = '.\\gopro2gpx\\gopro7(2).MP4'
+    if(os.path.isfile(file)):
+        main(file=file)
