@@ -70,6 +70,9 @@ def main(file):
         count = count + 1
         logging.info("Start to processing point " + str(count))
         cur_point = SimpleNamespace(lat= p.latitude, lon=p.longitude, time=p.time)
+        #TRA meter
+        cur_point.hmd = kmplush(kmpoints, cur_point)
+        #
         logging.debug(cur_point.__dict__)
 
         for frame_in_second in range(15):
@@ -94,6 +97,8 @@ def main(file):
         logging.debug("Waiting for all jobs done.....")
         time.sleep(10)
     logging.info("Process done")
+    mpdarknet.terminate()
+    mpsavedat.terminate()
     
 def detector(jobs, imgds, flag, dn_width, dn_height):
     signal.signal(signal.SIGINT, signal_handler)
@@ -133,6 +138,7 @@ def savedata(imgds, kmlpoints, debug = False):
     logger(nameprefix="savedata")
     logging.info(str(os.getpid()) + " savedata process start")
     savesdir = os.path.join(os.path.dirname(__file__), "saves")
+    outputxlsx = toxlsx()
     while True:
         if(imgds.empty()):
             time.sleep(1)
@@ -141,15 +147,60 @@ def savedata(imgds, kmlpoints, debug = False):
             job = imgds.get()
             if(job.detections != []):
                 logging.info("on frame {0} detected object".format(str(job.frame_count)))
-                filename = os.path.join(os.path.dirname(__file__), "saves", str(job.frame_count) + ".jpg")
+                job.filename = os.path.join(os.path.dirname(__file__), "saves", str(job.frame_count) + ".jpg")
                 logging.debug("frame_count {0}.detections = {1}".format(str(job.frame_count), str(job.detections)))
-                msg, job.frame = cf.roiDrawBoxes(job.detections, job.frame)
-                if(msg != ""):
-                    cv2.imwrite(filename, job.frame[...,::-1])
+                roiflag, job.frame = cf.roiDrawBoxes(job.detections, job.frame)
+                if(roiflag):
+                    cv2.imwrite(job.filename, job.frame[...,::-1])
+                    outputxlsx.add_record(job)
             elif(job.detections == []):
                 filename = os.path.join(os.path.dirname(__file__), "saves", "debug", str(job.frame_count) + ".jpg")
                 logging.debug("skip frame_count {0} for detections == {1}".format(str(job.frame_count), str(job.detections)))
                 if(debug):cv2.imwrite(filename, job.frame[...,::-1])
+
+class toxlsx():
+    def __init__(self):
+        # {'lat': 24.3372203, 'lon': 120.62232, 'time': datetime.datetime(2020, 3, 19, 17, 6, 11), 'hmd': namespace(meter=49.4823450363076, name='K180+300'),
+        # 'frame_count': 26372, 'detections': [('eclip_break_L1', 0.5526050925254822, (246.8352813720703, 251.3843994140625, 39.2724609375, 137.72581481933594))], 'filename': 'D:\\workspace\\rail_y2\\reporter\\saves\\26372.jpg'}
+        import xlwings as xw
+        self.wbpath = os.path.join(os.path.dirname(__file__), "saves", "report_" + datetime.now().strftime('%Y%m%d_%H%M%S') + ".xlsx")
+        self.workbook = xw.Book()
+        self.sheet = self.workbook.sheets['工作表1']
+        self.objcount = 0
+        self.cur_line = 2
+        self.initsheet()
+
+    def initsheet(self):
+        self.sheet.cells(1, "A").value = "編號"
+        self.sheet.cells(1, "B").value = "類型"
+        self.sheet.cells(1, "C").value = "時間"
+        self.sheet.cells(1, "D").value = "百公尺樁座標"
+        self.sheet.cells(1, "E").value = "儲存位置"
+        self.sheet.cells(1, "F").value = "影片中幀"
+        self.sheet.cells(1, "G").value = "detection_label"
+        self.sheet.cells(1, "H").value = "GPS"
+        self.workbook.save(self.wbpath)
+        
+    def add_record(self, job):
+        logging.debug(job.__dict__)
+        for d in job.detections:
+            self.sheet.cells(self.cur_line, "A").value = self.objcount
+
+            if("break" in d[0]):cls = "損壞"
+            else:cls = "其他"
+            self.sheet.cells(self.cur_line, "B").value = cls
+
+            self.sheet.cells(self.cur_line, "C").value = job.time
+            self.sheet.cells(self.cur_line, "D").value = job.hmd.name + "+" + str(round(job.hmd.meter,2))
+            self.sheet.cells(self.cur_line, "E").value = job.filename
+            self.sheet.cells(self.cur_line, "F").value = job.frame_count
+            self.sheet.cells(self.cur_line, "G").value = d[0]
+            self.sheet.cells(self.cur_line, "H").value = "({0}, {1})".format(job.lat, job.lon)
+
+            self.objcount = self.objcount + 1
+            self.cur_line = self.cur_line + 1
+
+        self.workbook.save(self.wbpath)
 
 if __name__ == "__main__":
     logger(nameprefix="Main")

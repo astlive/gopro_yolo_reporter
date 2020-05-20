@@ -22,7 +22,7 @@ def roiDrawBoxes(detections, img, top = 0.1, bot = 0.1):
     color = (0, 0, 0)
     min_y = round(img.shape[0] * top, 0)
     max_y = round(img.shape[0] * (1-bot), 0)
-    msg = ""
+    flag = False
 
     for detection in detections:
         x, y, w, h = detection[2][0],\
@@ -34,16 +34,13 @@ def roiDrawBoxes(detections, img, top = 0.1, bot = 0.1):
         pt1 = (xmin, ymin)
         pt2 = (xmax, ymax)
 
-        if("break" in detection[0] and ymin >= min_y and ymax <= max_y):
+        if(ymin >= min_y and ymax <= max_y):
+            flag = True
             color = red
-            msg = "brk"
             cv2.rectangle(img, pt1, pt2, (0, 255, 0), 1)
             cv2.putText(img,
                         detection[0] +
                         " [" + str(round(detection[1] * 100, 2)) + "]",
                         (pt1[0], pt1[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         color, 2)
-        else:
-            color = green
-            #if there has other class do here.
-    return msg, img
+    return flag, img
