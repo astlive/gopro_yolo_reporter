@@ -20,7 +20,7 @@ def signal_handler(sig, frame):
     logging.info(str(os.getpid()) + " terminate...")
     sys.exit(1)
 
-def main(file):
+def main(filepath):
     #designer for fps=60 and goPro7 mp4 Video
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -42,19 +42,19 @@ def main(file):
     if(len(kmpoints) < 2):
         logging.warning("not enough HMP for count\r\nExit.....")
         sys.exit(1)
-    points = getpoints(file, skip=False)
+    points = getpoints(filepath, skip=False)
     logging.info("find " + str(len(points)) + " GPS points in file")
     logging.info("Record time taken " + str(gettimediff(points)))
     if(len(points) < 2):
         logging.warning("not enout GPS point\r\nExit.....")
         sys.exit(1)
 
-    mpsavedat = mp.Process(target=savedata, args=(imgds,kmpoints,))
+    mpsavedat = mp.Process(target=savedata, args=(imgds,kmpoints,filepath,))
     mpsavedat.start()
 
-    cap = cv2.VideoCapture(file)
+    cap = cv2.VideoCapture(filepath)
     if(not cap.isOpened()):
-        logging.warning("could not open :", file)
+        logging.warning("could not open :", filepath)
         sys.exit(1)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     logging.info(str(total_frames) + " frames in file")
@@ -132,14 +132,15 @@ def detector(jobs, imgds, flag, dn_width, dn_height):
             imgds.put(job)
             # print("detector FPS:" + str(round(1 / (time.time() - fps_count_start_time), 1)))
 
-def savedata(imgds, kmlpoints, debug = False):
+def savedata(imgds, kmlpoints, filepath, debug = False):
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     logger(nameprefix="savedata")
     logging.info(str(os.getpid()) + " savedata process start")
-    savesdir = os.path.join(os.path.dirname(__file__), "saves", "report_" + datetime.now().strftime('%Y%m%d_%H%M%S'))
+    mp4filename = os.path.basename(filepath)
+    savesdir = os.path.join(os.path.dirname(__file__), "saves", mp4filename + "_report_" + datetime.now().strftime('%Y%m%d_%H%M%S'))
     os.makedirs(savesdir)
-    outputxlsx = toxlsx(savesdir)
+    outputxlsx = toxlsx(savesdir, mp4filename)
     while True:
         if(imgds.empty()):
             time.sleep(1)
@@ -160,26 +161,29 @@ def savedata(imgds, kmlpoints, debug = False):
                 if(debug):cv2.imwrite(filename, job.frame[...,::-1])
 
 class toxlsx():
-    def __init__(self, logdir):
+    def __init__(self, logdir, filename):
         # {'lat': 24.3372203, 'lon': 120.62232, 'time': datetime.datetime(2020, 3, 19, 17, 6, 11), 'hmd': namespace(meter=49.4823450363076, name='K180+300'),
         # 'frame_count': 26372, 'detections': [('eclip_break_L1', 0.5526050925254822, (246.8352813720703, 251.3843994140625, 39.2724609375, 137.72581481933594))], 'filename': 'D:\\workspace\\rail_y2\\reporter\\saves\\26372.jpg'}
         import xlwings as xw
+        self.filename = filename
         self.wbpath = os.path.join(logdir, os.path.basename(logdir) + ".xlsx")
         self.workbook = xw.Book()
         self.sheet = self.workbook.sheets['工作表1']
         self.objcount = 1
-        self.cur_line = 2
+        self.cur_line = 3
         self.initsheet()
 
     def initsheet(self):
-        self.sheet.cells(1, "A").value = "編號"
-        self.sheet.cells(1, "B").value = "類型"
-        self.sheet.cells(1, "C").value = "時間"
-        self.sheet.cells(1, "D").value = "百公尺樁座標"
-        self.sheet.cells(1, "E").value = "儲存位置"
-        self.sheet.cells(1, "F").value = "影片中幀"
-        self.sheet.cells(1, "G").value = "detection_label"
-        self.sheet.cells(1, "H").value = "GPS"
+        self.sheet.cells(1, "A").value = "影片檔案"
+        self.sheet.cells(1, "B").value = self.filename
+        self.sheet.cells(2, "A").value = "物件編號"
+        self.sheet.cells(2, "B").value = "類型"
+        self.sheet.cells(2, "C").value = "時間"
+        self.sheet.cells(2, "D").value = "百公尺樁座標"
+        self.sheet.cells(2, "E").value = "儲存位置"
+        self.sheet.cells(2, "F").value = "影片中幀"
+        self.sheet.cells(2, "G").value = "detection_label"
+        self.sheet.cells(2, "H").value = "GPS"
         self.workbook.save(self.wbpath)
         
     def add_record(self, job):
@@ -205,6 +209,7 @@ class toxlsx():
 
 if __name__ == "__main__":
     logger(nameprefix="Main")
-    file = '.\\gopro2gpx\\gopro7(2).MP4'
-    if(os.path.isfile(file)):
-        main(file=file)
+    filepath = '.\\gopro2gpx\\gopro7.MP4'
+    # filepath = '.\\gopro2gpx\\gopro7(2).MP4'
+    if(os.path.isfile(filepath)):
+        main(filepath=filepath)
