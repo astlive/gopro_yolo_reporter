@@ -88,7 +88,7 @@ def main(filepath):
                 video_time = cur_frame*frame_sec
             if((count == 1 and (video_time + frame_sec - one_sec) > 0.5) or (video_time + frame_sec - one_sec) > 1 ):
                 break
-            logging.debug("processing frame " + str(cur_frame) + " Video_Time:" + str(video_time) + " last_time:" + str(one_sec))
+            logging.debug("processing frame " + str(cur_frame) + " Video_Time:" + str(video_time) + " one_sec:" + str(video_time - one_sec))
             success, frame = cap.read()
             frame = cv2.flip(frame, flipCode=-1)
             if(not success):
@@ -238,8 +238,8 @@ class toxlsx():
 
 if __name__ == "__main__":
     logger(nameprefix="Main")
-    filepath = '.\\gopro2gpx\\gopro7.MP4'
-    # filepath = '.\\gopro2gpx\\gopro7(2).MP4'
+    # filepath = '.\\gopro2gpx\\gopro7.MP4'
+    filepath = '.\\gopro2gpx\\gopro7(2).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(3).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(4).MP4'
     if(os.path.isfile(filepath)):
