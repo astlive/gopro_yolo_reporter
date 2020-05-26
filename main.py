@@ -46,7 +46,7 @@ def main(filepath):
     logging.info("find " + str(len(points)) + " GPS points in file")
     logging.info("Record time taken " + str(gettimediff(points)))
     if(len(points) < 2):
-        logging.warning("not enout GPS point\r\nExit.....")
+        logging.warning("not enough GPS point\r\nExit.....")
         sys.exit(1)
 
     mpsavedat = mp.Process(target=savedata, args=(imgds,kmpoints,filepath,))
@@ -57,10 +57,12 @@ def main(filepath):
         logging.warning("could not open :", filepath)
         sys.exit(1)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    logging.info(str(total_frames) + " frames in file")
-
+    video_fps = round(cap.get(cv2.CAP_PROP_FPS), 2)
+    logging.info("File: {0} FPS: {1} Total Frames: {2}".format(filepath, str(video_fps), str(total_frames)))
+    frame_sec = round(1 / video_fps, 6)
     count = 0
     cur_frame = 0
+    video_time = 0
 
     for p in points :
         while(imgs.qsize() > 700):
@@ -75,14 +77,20 @@ def main(filepath):
         #
         logging.debug(cur_point.__dict__)
 
-        for frame_in_second in range(15):
-            if(count == 1 and frame_in_second == 8):
-                break
+        one_sec = video_time
+        while((video_time - one_sec) < 1):
+            cur_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+            video_time = cur_frame*frame_sec
             while(cur_frame % 4 != 0 and cur_frame > 0):
+                # logging.debug("skip frame " + str(cur_frame) + " Video_Time:" + str(video_time) + " last_time:" + str(one_sec))
                 cap.grab()
-                cur_frame = cur_frame + 1
-            logging.debug("processing frame " + str(cur_frame))
+                cur_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+                video_time = cur_frame*frame_sec
+            if((count == 1 and (video_time + frame_sec - one_sec) > 0.5) or (video_time + frame_sec - one_sec) > 1 ):
+                break
+            logging.debug("processing frame " + str(cur_frame) + " Video_Time:" + str(video_time) + " last_time:" + str(one_sec))
             success, frame = cap.read()
+            frame = cv2.flip(frame, flipCode=-1)
             if(not success):
                 logging.warning("frame {0} read fail skip.....".format(str(cur_frame)))
             else:
@@ -90,7 +98,25 @@ def main(filepath):
                 job.frame = cv2.resize(frame, (dn_width.value,dn_height.value), interpolation=cv2.INTER_AREA)[...,::-1]
                 job.frame_count = cur_frame
                 imgs.put(job)
-            cur_frame = cur_frame + 1
+            
+        # Frame base point switch for 60 FPS
+        # for frame_in_second in range(15):
+        #     cur_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+        #     if(count == 1 and frame_in_second == 8):
+        #         break
+        #     while(cur_frame % 4 != 0 and cur_frame > 0):
+        #         cap.grab()
+        #         cur_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+        #     logging.debug("processing frame " + str(cur_frame))
+        #     success, frame = cap.read()
+        #     frame = cv2.flip(frame, flipCode=-1)
+        #     if(not success):
+        #         logging.warning("frame {0} read fail skip.....".format(str(cur_frame)))
+        #     else:
+        #         job = cur_point
+        #         job.frame = cv2.resize(frame, (dn_width.value,dn_height.value), interpolation=cv2.INTER_AREA)[...,::-1]
+        #         job.frame_count = cur_frame
+        #         imgs.put(job)
         if(cur_frame >= total_frames or count == len(points)):
             break
     while(not(imgs.empty() and imgds.empty())):
@@ -147,6 +173,9 @@ def savedata(imgds, kmlpoints, filepath, debug = False):
             logging.debug("imgds.qisze() = {0} sleep(1)".format(str(imgds.qsize())))
         else:
             job = imgds.get()
+            if(debug):
+                cv2.imshow("monitor", job.frame[...,::-1])
+                cv2.waitKey(1)
             if(job.detections != []):
                 logging.info("on frame {0} detected object".format(str(job.frame_count)))
                 job.filename = os.path.join(savesdir, str(job.frame_count) + ".jpg")
@@ -158,7 +187,7 @@ def savedata(imgds, kmlpoints, filepath, debug = False):
             elif(job.detections == []):
                 filename = os.path.join(savesdir, "debug", str(job.frame_count) + ".jpg")
                 logging.debug("skip frame_count {0} for detections == {1}".format(str(job.frame_count), str(job.detections)))
-                if(debug):cv2.imwrite(filename, job.frame[...,::-1])
+                # if(debug):cv2.imwrite(filename, job.frame[...,::-1])
 
 class toxlsx():
     def __init__(self, logdir, filename):
@@ -211,5 +240,7 @@ if __name__ == "__main__":
     logger(nameprefix="Main")
     filepath = '.\\gopro2gpx\\gopro7.MP4'
     # filepath = '.\\gopro2gpx\\gopro7(2).MP4'
+    # filepath = '.\\gopro2gpx\\gopro7(3).MP4'
+    # filepath = '.\\gopro2gpx\\gopro7(4).MP4'
     if(os.path.isfile(filepath)):
         main(filepath=filepath)
