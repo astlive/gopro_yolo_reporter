@@ -38,8 +38,6 @@ def kmplush(kmpoints, targetpoint):
             else:
                 kmp.name = lpoint.name
                 kmp.meter = mdiff
-                kmfo = lpoint.name.split("+")
-                kmp.kmfo = kmfo[0] + (str)((float)(kmfo[1])+mdiff)
             break
         else:
             lpoint = rpoint
@@ -49,4 +47,6 @@ def kmplush(kmpoints, targetpoint):
             # print(lpoint['name'],"curdiff",curdiff,rpoint['name'],"nxtdiff",nxtdiff)
     # print("most close point at " + str(lpoint))
     # print("kmp:" + str(kmp))
+    kmfo = kmp.name.split("+")
+    kmp.kmfo = kmfo[0] + "+" + (str)(round((float)(kmfo[1]) + kmp.meter, 2))
     return kmp
