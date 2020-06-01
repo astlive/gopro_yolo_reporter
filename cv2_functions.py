@@ -4,8 +4,8 @@ def cv_size(img):
     return tuple(img.shape[1::-1])
 
 def draw_msg(img, str1, str2, color1 = (0,255,0), color2 = (0,0,255)):
-    cv2.putText(img, str1, (10,40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color1, 2)
-    cv2.putText(img, str2, (10,80), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color2, 2)
+    cv2.putText(img, str1, (10,40), cv2.FONT_HERSHEY_DUPLEX, 1, color1, 1, cv2.LINE_AA)
+    cv2.putText(img, str2, (10,80), cv2.FONT_HERSHEY_DUPLEX, 1, color2, 1, cv2.LINE_AA)
     return img
 
 def convertBack(x, y, w, h):

@@ -182,6 +182,8 @@ def savedata(imgds, kmlpoints, filepath, debug = False):
                 logging.debug("frame_count {0}.detections = {1}".format(str(job.frame_count), str(job.detections)))
                 roiflag, job.frame = cf.roiDrawBoxes(job.detections, job.frame)
                 if(roiflag):
+                    logging.info("Roi check PASS")
+                    job.frame = cf.draw_msg(img = job.frame, str1=str(job.time), str2=str(job.hmd.kmfo))
                     cv2.imwrite(job.filename, job.frame[...,::-1])
                     outputxlsx.add_record(job)
             elif(job.detections == []):
@@ -216,16 +218,16 @@ class toxlsx():
         self.workbook.save(self.wbpath)
         
     def add_record(self, job):
-        logging.debug(job.__dict__)
+        logging.debug("add_recourd to Excel: {{lat:{0}, lon:{1}, time:{2}, hmd:{3}, frame_count:{4}, detections:{5}, filename:{6}}}".
+                    format(job.lat, job.lon, job.time, job.hmd.kmfo, job.frame_count, job.detections, job.filename))
         for d in job.detections:
             self.sheet.cells(self.cur_line, "A").value = self.objcount
 
             if("break" in d[0]):cls = "損壞"
             else:cls = "其他"
             self.sheet.cells(self.cur_line, "B").value = cls
-
             self.sheet.cells(self.cur_line, "C").value = job.time
-            self.sheet.cells(self.cur_line, "D").value = job.hmd.name + "+" + str(round(job.hmd.meter,2))
+            self.sheet.cells(self.cur_line, "D").value = job.hmd.kmfo
             self.sheet.cells(self.cur_line, "E").value = job.filename
             self.sheet.cells(self.cur_line, "F").value = job.frame_count
             self.sheet.cells(self.cur_line, "G").value = d[0]
@@ -238,8 +240,8 @@ class toxlsx():
 
 if __name__ == "__main__":
     logger(nameprefix="Main")
-    # filepath = '.\\gopro2gpx\\gopro7.MP4'
-    filepath = '.\\gopro2gpx\\gopro7(2).MP4'
+    filepath = '.\\gopro2gpx\\gopro7(1).MP4'
+    # filepath = '.\\gopro2gpx\\gopro7(2).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(3).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(4).MP4'
     if(os.path.isfile(filepath)):

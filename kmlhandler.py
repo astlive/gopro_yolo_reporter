@@ -38,6 +38,8 @@ def kmplush(kmpoints, targetpoint):
             else:
                 kmp.name = lpoint.name
                 kmp.meter = mdiff
+                kmfo = lpoint.name.split("+")
+                kmp.kmfo = kmfo[0] + (str)((float)(kmfo[1])+mdiff)
             break
         else:
             lpoint = rpoint
