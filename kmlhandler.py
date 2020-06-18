@@ -24,16 +24,32 @@ def getkmpoints(kmldir="./kmls/"):
     return points
 
 def kmplush(kmpoints, targetpoint):
-    lpoint = kmpoints[0]
-    rpoint = kmpoints[1]
-    curdiff = geopy.distance.vincenty((lpoint.lat, lpoint.lon),(targetpoint.lat,targetpoint.lon)).km
-    nxtdiff = geopy.distance.vincenty((rpoint.lat, rpoint.lon),(targetpoint.lat,targetpoint.lon)).km
+    # print(targetpoint)
+    point_thresh = 0.1
+    for i in range(8):
+        kmp = findclosepoint(kmpoints, targetpoint, thresh=point_thresh)
+        if(hasattr(kmp, 'name')):
+            break
+        point_thresh = point_thresh + 0.05
+    if(not hasattr(kmp, 'name')):
+        kmp.name = "kFFF+000"
+        kmp.meter = 0
+    # print("kmp:" + str(kmp))
+    kmfo = kmp.name.split("+")
+    kmp.kmfo = kmfo[0] + "+" + (str)(round((float)(kmfo[1]) + kmp.meter, 2))
+    return kmp
+
+def findclosepoint(points, targetpoint, thresh=0.1):
+    lpoint = points[0]
+    rpoint = points[1]
+    curdiff = geopy.distance.geodesic((lpoint.lat, lpoint.lon),(targetpoint.lat,targetpoint.lon)).km
+    nxtdiff = geopy.distance.geodesic((rpoint.lat, rpoint.lon),(targetpoint.lat,targetpoint.lon)).km
     kmp = SimpleNamespace()
-    for i in range(2,len(kmpoints)):
-        if(curdiff<nxtdiff and curdiff<0.1):
-            mdiff = geopy.distance.vincenty((lpoint.lat, lpoint.lon),(targetpoint.lat, targetpoint.lon)).km*1000
-            if(nxtdiff>=0.1):
-                kmp.name = kmpoints[lpoint.index - 1].name
+    for i in range(2,len(points)):
+        if(curdiff < nxtdiff and curdiff <= thresh):
+            mdiff = geopy.distance.geodesic((lpoint.lat, lpoint.lon),(targetpoint.lat, targetpoint.lon)).km*1000
+            if(nxtdiff >= 0.1):
+                kmp.name = points[lpoint.index - 1].name
                 kmp.meter = 100 - mdiff
             else:
                 kmp.name = lpoint.name
@@ -41,12 +57,16 @@ def kmplush(kmpoints, targetpoint):
             break
         else:
             lpoint = rpoint
-            rpoint = kmpoints[i]
+            rpoint = points[i]
             curdiff = nxtdiff
-            nxtdiff = geopy.distance.vincenty((rpoint.lat, rpoint.lon),(targetpoint.lat, targetpoint.lon)).km
+            nxtdiff = geopy.distance.geodesic((rpoint.lat, rpoint.lon),(targetpoint.lat, targetpoint.lon)).km
             # print(lpoint['name'],"curdiff",curdiff,rpoint['name'],"nxtdiff",nxtdiff)
     # print("most close point at " + str(lpoint))
-    # print("kmp:" + str(kmp))
-    kmfo = kmp.name.split("+")
-    kmp.kmfo = kmfo[0] + "+" + (str)(round((float)(kmfo[1]) + kmp.meter, 2))
     return kmp
+
+if __name__ == "__main__":
+    kmpoints = getkmpoints()
+    p = SimpleNamespace(lat = 24.3392393, lon = 120.6249646)
+    kmp = kmplush(kmpoints, p)
+    print(kmp)
+    pass
