@@ -25,32 +25,29 @@ def getkmpoints(kmldir="./kmls/"):
 
 def kmplush(kmpoints, targetpoint):
     # print(targetpoint)
-    point_thresh = 0.1
-    for i in range(8):
-        kmp = findclosepoint(kmpoints, targetpoint, thresh=point_thresh)
-        if(hasattr(kmp, 'name')):
-            break
-        point_thresh = point_thresh + 0.05
+    kmp = findclosepoint(kmpoints, targetpoint)
     if(not hasattr(kmp, 'name')):
-        kmp.name = "kFFF+000"
+        kmp.name = "KFFF+000"
         kmp.meter = 0
     # print("kmp:" + str(kmp))
     kmfo = kmp.name.split("+")
     kmp.kmfo = kmfo[0] + "+" + (str)(round((float)(kmfo[1]) + kmp.meter, 2))
     return kmp
 
-def findclosepoint(points, targetpoint, thresh=0.1):
+def findclosepoint(points, targetpoint, thresh=0.1, debug=False):
     lpoint = points[0]
     rpoint = points[1]
     curdiff = geopy.distance.geodesic((lpoint.lat, lpoint.lon),(targetpoint.lat,targetpoint.lon)).km
     nxtdiff = geopy.distance.geodesic((rpoint.lat, rpoint.lon),(targetpoint.lat,targetpoint.lon)).km
     kmp = SimpleNamespace()
+    if(debug):print("distance thresh = {0}".format(thresh))
     for i in range(2,len(points)):
         if(curdiff < nxtdiff and curdiff <= thresh):
             mdiff = geopy.distance.geodesic((lpoint.lat, lpoint.lon),(targetpoint.lat, targetpoint.lon)).km*1000
+            if(debug):print("mdiff = {0}".format(mdiff))
             if(nxtdiff >= 0.1):
                 kmp.name = points[lpoint.index - 1].name
-                kmp.meter = 100 - mdiff
+                kmp.meter = thresh*1000 - mdiff
             else:
                 kmp.name = lpoint.name
                 kmp.meter = mdiff
@@ -60,8 +57,8 @@ def findclosepoint(points, targetpoint, thresh=0.1):
             rpoint = points[i]
             curdiff = nxtdiff
             nxtdiff = geopy.distance.geodesic((rpoint.lat, rpoint.lon),(targetpoint.lat, targetpoint.lon)).km
-            # print(lpoint['name'],"curdiff",curdiff,rpoint['name'],"nxtdiff",nxtdiff)
-    # print("most close point at " + str(lpoint))
+            if(debug):print(lpoint.name,"curdiff",curdiff,rpoint.name,"nxtdiff",nxtdiff)
+    if(debug):print("most close point at " + str(lpoint))
     return kmp
 
 if __name__ == "__main__":

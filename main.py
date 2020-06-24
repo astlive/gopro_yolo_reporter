@@ -137,37 +137,6 @@ def detector(jobs, imgds, flag, dn_width, dn_height):
     # weipath = ".\\darknet_data\\yolov4-tra_320_best.weights"
     # metpath = ".\\darknet_data\\obj.data"
 
-    #v2
-    # cfgpath = ".\\darknet_data\\v2\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v2\\yolov4-tra_320_11000.weights"
-    # metpath = ".\\darknet_data\\v2\\obj.data"
-
-    #v3
-    # cfgpath = ".\\darknet_data\\v3\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v3\\yolov4-tra_416_best.weights"
-    # metpath = ".\\darknet_data\\v3\\obj.data"
-
-    #v4
-    # cfgpath = ".\\darknet_data\\v4\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v4\\yolov4-tra_416_best.weights"
-    # metpath = ".\\darknet_data\\v4\\obj.data"
-
-    #v5
-    # cfgpath = ".\\darknet_data\\v5\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v5\\yolov4-tra_416_best.weights"
-    # metpath = ".\\darknet_data\\v5\\obj.data"
-
-    #v6
-    # cfgpath = ".\\darknet_data\\v6\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v6\\yolov4-tra_416_best.weights"
-    # weipath = ".\\darknet_data\\v6\\yolov4-tra_416_8000.weights"
-    # metpath = ".\\darknet_data\\v6\\obj.data"
-
-    #v7
-    # cfgpath = ".\\darknet_data\\v7\\yolov4-tra_416.cfg"
-    # weipath = ".\\darknet_data\\v7\\yolov4-tra_416_best_v1.weights"
-    # metpath = ".\\darknet_data\\v7\\obj.data"
-
     #v8
     cfgpath = ".\\darknet_data\\v8\\yolov4-tra_416.cfg"
     weipath = ".\\darknet_data\\v8\\yolov4-tra_416_best.weights"
@@ -276,7 +245,8 @@ class toxlsx():
             self.sheet.cells(self.cur_line, "B").value = cls
             self.sheet.cells(self.cur_line, "C").value = job.time
             self.sheet.cells(self.cur_line, "D").value = job.hmd.kmfo
-            self.sheet.cells(self.cur_line, "E").value = job.filename
+            # self.sheet.cells(self.cur_line, "E").value = job.filename
+            self.sheet.cells(self.cur_line, "E").add_hyperlink(job.filename)
             self.sheet.cells(self.cur_line, "F").value = job.frame_count
             self.sheet.cells(self.cur_line, "G").value = d[0]
             self.sheet.cells(self.cur_line, "H").value = "({0}, {1})".format(job.lat, job.lon)
@@ -288,8 +258,9 @@ class toxlsx():
 
 if __name__ == "__main__":
     logger(nameprefix="Main")
+    filepath = input("File Path:")
     # filepath = '.\\gopro2gpx\\gopro7(1).MP4'
-    filepath = '.\\gopro2gpx\\gopro7(2).MP4'
+    # filepath = '.\\gopro2gpx\\gopro7(2).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(3).MP4'
     # filepath = '.\\gopro2gpx\\gopro7(4).MP4'
     if(os.path.isfile(filepath)):
