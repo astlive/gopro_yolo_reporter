@@ -1,7 +1,7 @@
 from datetime import datetime
 from logger import logger
 from kmlhandler import getkmpoints, kmplush
-from gopro7gpshandler import getpoints, gettimediff
+from gopro2gpxhandler import getpoints, gettimediff
 from types import SimpleNamespace
 import cv2_functions as cf
 import multiprocessing as mp

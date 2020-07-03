@@ -63,7 +63,7 @@ def chk():
     return True
 
 if __name__ == "__main__":
-    config = mkconfig('.\\gopro2gpx\\gopro7.MP4')
+    config = mkconfig('.\\gopro2gpx\\gopro8(1).MP4')
     print(config.__dict__)
     if(chk()):
         print("start test")
